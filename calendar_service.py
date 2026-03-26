@@ -2,6 +2,7 @@
 Google Calendar API integration using service account.
 """
 
+import json
 import os
 import logging
 from datetime import datetime, timedelta
@@ -20,17 +21,22 @@ def _get_service():
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
 
-    creds_file = settings.GOOGLE_CREDENTIALS_FILE
-    if not os.path.exists(creds_file):
-        raise FileNotFoundError(
-            f"קובץ credentials.json לא נמצא ב-{creds_file}. "
-            "צריך ליצור service account ב-Google Cloud Console."
-        )
+    scopes = ["https://www.googleapis.com/auth/calendar"]
 
-    creds = service_account.Credentials.from_service_account_file(
-        creds_file,
-        scopes=["https://www.googleapis.com/auth/calendar"],
-    )
+    # Try env var first (for Render deployment), then file
+    creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    if creds_json:
+        info = json.loads(creds_json)
+        creds = service_account.Credentials.from_service_account_info(info, scopes=scopes)
+    else:
+        creds_file = settings.GOOGLE_CREDENTIALS_FILE
+        if not os.path.exists(creds_file):
+            raise FileNotFoundError(
+                f"קובץ credentials.json לא נמצא ב-{creds_file}. "
+                "צריך ליצור service account ב-Google Cloud Console."
+            )
+        creds = service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
+
     return build("calendar", "v3", credentials=creds)
 
 
