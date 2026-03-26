@@ -3,7 +3,9 @@ AsherBot - AI conversation logic with Claude tool_use.
 """
 
 import logging
+from datetime import datetime
 
+import pytz
 from anthropic import Anthropic
 
 from config import settings
@@ -30,7 +32,7 @@ def get_response(phone: str, message: str, sender_name: str = "") -> str:
         response = client.messages.create(
             model=settings.LLM_MODEL,
             max_tokens=1024,
-            system=settings.SYSTEM_PROMPT,
+            system=f"{settings.SYSTEM_PROMPT}\n\nהתאריך והשעה הנוכחיים: {datetime.now(pytz.timezone(settings.TIMEZONE)).strftime('%Y-%m-%d %H:%M')} (שנת 2026)",
             messages=messages,
             tools=TOOLS,
         )
